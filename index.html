@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spendy</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0F6CBD">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Spendy">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — Fluent UI 2 iOS
+       ============================================================ */
+    :root {
+      --color-brand:        #0F6CBD;
+      --color-bg-1:         #FFFFFF;
+      --color-bg-2:         #F3F2F1;
+      --color-fg-1:         #242424;
+      --color-fg-2:         #616161;
+      --color-stroke-1:     #E0E0E0;
+      --color-success:      #107C10;
+      --color-error:        #D13438;
+      --color-brand-tint:   #E5F1FB;
+
+      --radius-sm:          4px;
+      --radius-md:          8px;
+      --radius-lg:          12px;
+      --radius-xl:          16px;
+      --radius-circular:    9999px;
+
+      --shadow-2: 0 1px 2px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+      --shadow-4: 0 2px 4px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+      --shadow-8: 0 4px 8px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.12);
+
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+      --t-fast:   150ms ease;
+      --t-normal: 250ms ease;
+      --t-slow:   350ms ease;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: var(--font);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+
+    /* ============================================================
+       APP SHELL — full-screen on mobile, phone frame on desktop
+       ============================================================ */
+    #app-wrapper {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #app {
+      position: relative;
+      width: 100%; height: 100%;
+      background: var(--color-bg-2);
+      overflow: hidden;
+    }
+
+    @media (min-width: 500px) {
+      #app {
+        width: 430px; height: 844px;
+        border-radius: 50px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.1);
+      }
+    }
+
+    /* ============================================================
+       SCREENS
+       ============================================================ */
+    .screen {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      background: var(--color-bg-2);
+    }
+    .screen.active { display: flex; }
+
+    /* ============================================================
+       AUTH SCREEN
+       ============================================================ */
+    #screen-auth {
+      background: var(--color-bg-1);
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0;
+      overflow-y: auto;
+    }
+
+    .auth-inner {
+      width: 100%;
+      max-width: 380px;
+      padding: 48px 28px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .auth-logo {
+      width: 76px; height: 76px;
+      background: var(--color-brand);
+      border-radius: var(--radius-xl);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-8);
+    }
+    .auth-logo svg { width: 44px; height: 44px; fill: white; }
+
+    .auth-title {
+      font-size: 28px; font-weight: 700;
+      color: var(--color-fg-1); margin-bottom: 6px;
+    }
+    .auth-subtitle {
+      font-size: 15px; color: var(--color-fg-2);
+      margin-bottom: 36px; text-align: center;
+    }
+
+    .auth-form { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+
+    .input-group  { display: flex; flex-direction: column; gap: 4px; }
+    .input-label  { font-size: 13px; font-weight: 600; color: var(--color-fg-2); }
+
+    .input-field {
+      width: 100%; height: 48px;
+      padding: 0 14px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-md);
+      font-size: 16px; font-family: var(--font);
+      color: var(--color-fg-1); background: var(--color-bg-1);
+      outline: none;
+      transition: border-color var(--t-fast);
+    }
+    .input-field:focus { border-color: var(--color-brand); }
+
+    .btn-primary {
+      width: 100%; height: 48px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity var(--t-fast), transform var(--t-fast);
+    }
+    .btn-primary:active { opacity: .85; transform: scale(.98); }
+
+    .auth-toggle {
+      margin-top: 20px;
+      font-size: 14px; color: var(--color-fg-2); text-align: center;
+    }
+    .auth-toggle a { color: var(--color-brand); font-weight: 600; cursor: pointer; }
+
+    .error-msg {
+      font-size: 13px; color: var(--color-error);
+      background: #fee7e8; padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ============================================================
+       ONBOARDING SCREEN
+       ============================================================ */
+    #screen-onboarding {
+      background: var(--color-bg-1);
+      overflow: hidden;
+    }
+
+    .progress-dots {
+      display: flex; gap: 6px; justify-content: center;
+      padding: 20px 24px 0;
+    }
+    .progress-dot {
+      width: 8px; height: 8px;
+      border-radius: var(--radius-circular);
+      background: var(--color-stroke-1);
+      transition: background var(--t-normal), width var(--t-normal);
+    }
+    .progress-dot.active { background: var(--color-brand); width: 24px; }
+    .progress-dot.done   { background: var(--color-brand); opacity: .4; }
+
+    .onboarding-body {
+      flex: 1; overflow: hidden;
+      padding: 28px 24px 0;
+      display: flex; flex-direction: column;
+    }
+
+    .onboarding-step { display: none; flex-direction: column; flex: 1; }
+    .onboarding-step.active { display: flex; }
+
+    .step-emoji   { font-size: 52px; margin-bottom: 14px; }
+    .step-title   { font-size: 26px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 8px; line-height: 1.2; }
+    .step-subtitle{ font-size: 15px; color: var(--color-fg-2); margin-bottom: 28px; line-height: 1.55; }
+
+    .step-content { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+
+    /* Radio options */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: border-color var(--t-fast), background var(--t-fast);
+    }
+    .radio-option.selected { border-color: var(--color-brand); background: var(--color-brand-tint); }
+    .radio-option input[type="radio"] { display: none; }
+    .radio-dot {
+      width: 20px; height: 20px;
+      border-radius: var(--radius-circular);
+      border: 2px solid var(--color-stroke-1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: border-color var(--t-fast);
+    }
+    .radio-option.selected .radio-dot { border-color: var(--color-brand); }
+    .radio-dot::after {
+      content: ''; width: 10px; height: 10px;
+      border-radius: var(--radius-circular);
+      background: var(--color-brand);
+      opacity: 0; transition: opacity var(--t-fast);
+    }
+    .radio-option.selected .radio-dot::after { opacity: 1; }
+    .radio-label { font-size: 15px; font-weight: 600; color: var(--color-fg-1); }
+    .radio-desc  { font-size: 13px; color: var(--color-fg-2); margin-top: 1px; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px;
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-lg);
+    }
+    .toggle-label { font-size: 15px; font-weight: 600; color: var(--color-fg-1); }
+
+    .toggle {
+      width: 50px; height: 28px;
+      background: var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      position: relative;
+      cursor: pointer; border: none; outline: none; flex-shrink: 0;
+      transition: background var(--t-normal);
+    }
+    .toggle.on { background: var(--color-brand); }
+    .toggle::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      background: white;
+      border-radius: var(--radius-circular);
+      box-shadow: var(--shadow-2);
+      transition: transform var(--t-normal);
+    }
+    .toggle.on::after { transform: translateX(22px); }
+
+    /* Rate highlight card */
+    .result-highlight {
+      background: var(--color-brand-tint);
+      border: 1.5px solid var(--color-brand);
+      border-radius: var(--radius-xl);
+      padding: 24px; text-align: center;
+    }
+    .result-highlight .rate { font-size: 42px; font-weight: 800; color: var(--color-brand); }
+    .result-highlight .rate-label { font-size: 15px; color: var(--color-fg-2); margin-top: 4px; }
+
+    .onboarding-footer { padding: 16px 24px 36px; display: flex; flex-direction: column; gap: 8px; }
+
+    .btn-back {
+      background: none; border: none;
+      color: var(--color-brand); font-size: 15px; font-family: var(--font);
+      cursor: pointer; padding: 4px 0; text-align: left;
+    }
+
+    /* ============================================================
+       APP SCREEN — tab layout
+       ============================================================ */
+    #screen-app { display: none; }
+    #screen-app.active { display: flex; }
+
+    /* Tab bar */
+    .tab-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: var(--color-bg-1);
+      border-top: 1px solid var(--color-stroke-1);
+      display: flex; align-items: stretch;
+      z-index: 100;
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px;
+      background: none; border: none;
+      cursor: pointer;
+      padding: 8px 0 18px;
+      color: var(--color-fg-2);
+      font-size: 11px; font-family: var(--font); font-weight: 500;
+      transition: color var(--t-fast);
+    }
+    .tab-btn.active { color: var(--color-brand); }
+    .tab-btn svg { width: 24px; height: 24px; }
+
+    /* Tab content panes */
+    .tab-content {
+      display: none; flex-direction: column;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 80px;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-content.active { display: flex; }
+
+    /* ============================================================
+       CALCULATOR TAB
+       ============================================================ */
+    #tab-calculator {
+      padding: 16px; gap: 12px;
+      overflow: hidden; /* keypad fills space, no scroll */
+    }
+
+    /* Dollar bill */
+    .dollar-bill {
+      background: #1b5e20;
+      border-radius: var(--radius-xl);
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      flex-shrink: 0;
+      min-height: 130px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      box-shadow: var(--shadow-8), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    /* Dashed inner border */
+    .dollar-bill::before {
+      content: '';
+      position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+      border: 1.5px dashed rgba(255,255,255,.22);
+      border-radius: var(--radius-lg);
+      pointer-events: none;
+    }
+    /* Watermark */
+    .dollar-bill::after {
+      content: 'SPENDY';
+      position: absolute;
+      font-size: 44px; font-weight: 900;
+      color: rgba(255,255,255,.04);
+      letter-spacing: 6px;
+      pointer-events: none; user-select: none;
+    }
+    /* Decorative circles */
+    .bill-circle {
+      position: absolute;
+      width: 76px; height: 76px;
+      border-radius: var(--radius-circular);
+      border: 1.5px dashed rgba(255,255,255,.18);
+    }
+    .bill-circle-left  { left: -38px; top: 50%; transform: translateY(-50%); }
+    .bill-circle-right { right: -38px; top: 50%; transform: translateY(-50%); }
+
+    .bill-amount {
+      font-size: 50px; font-weight: 800; color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,.3);
+      line-height: 1; position: relative; z-index: 1;
+      transition: transform 200ms ease;
+    }
+    .bill-amount.pulse { animation: billPulse 280ms cubic-bezier(.34,1.56,.64,1); }
+    @keyframes billPulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .bill-minutes {
+      font-size: 13px; color: rgba(255,255,255,.72);
+      margin-top: 6px; position: relative; z-index: 1;
+    }
+
+    /* Keypad */
+    .keypad-container {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .keypad-grid {
+      flex: 1; min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .key-btn {
+      background: var(--color-bg-1);
+      border: none; border-radius: var(--radius-lg);
+      font-size: 22px; font-weight: 500; font-family: var(--font);
+      color: var(--color-fg-1);
+      cursor: pointer;
+      box-shadow: var(--shadow-2);
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+    .key-btn:active { background: var(--color-bg-2); transform: scale(.93); box-shadow: none; }
+    .key-btn.key-delete { font-size: 18px; color: var(--color-fg-2); }
+
+    .enter-btn {
+      height: 50px; flex-shrink: 0;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-lg);
+      font-size: 17px; font-weight: 700; font-family: var(--font);
+      cursor: pointer;
+      box-shadow: var(--shadow-4);
+      transition: opacity var(--t-fast), transform var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .enter-btn:active { opacity: .86; transform: scale(.98); }
+
+    /* ============================================================
+       RESULT BOTTOM SHEET
+       ============================================================ */
+    .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .overlay.visible { opacity: 1; pointer-events: all; }
+
+    .bottom-sheet {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: var(--color-bg-1);
+      border-radius: 20px 20px 0 0;
+      padding: 0 20px 36px;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform var(--t-normal);
+      box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+      max-height: 90%;
+      overflow-y: auto;
+    }
+    .bottom-sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      margin: 12px auto 18px;
+    }
+
+    .sheet-result { text-align: center; margin-bottom: 20px; }
+    .sheet-amount { font-size: 34px; font-weight: 800; color: var(--color-fg-1); }
+    .sheet-equals { font-size: 16px; color: var(--color-fg-2); margin: 4px 0; }
+    .sheet-time   { font-size: 20px; font-weight: 700; color: var(--color-brand); }
+
+    /* Action buttons */
+    .action-buttons { display: flex; gap: 8px; margin-bottom: 4px; }
+    .action-btn {
+      flex: 1; height: 56px;
+      border: none; border-radius: var(--radius-lg);
+      font-size: 13px; font-weight: 700; font-family: var(--font);
+      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      transition: opacity var(--t-fast), transform var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .action-btn:active  { opacity: .85; transform: scale(.95); }
+    .action-btn .btn-em { font-size: 20px; }
+    .action-btn.buy-btn    { background: #e8f5e9; color: var(--color-success); }
+    .action-btn.giveup-btn { background: #fdeeee; color: var(--color-error); }
+    .action-btn.notrack-btn{ background: var(--color-bg-2); color: var(--color-fg-2); }
+
+    /* Entry form inside sheet */
+    .sheet-form { display: none; flex-direction: column; gap: 12px; margin-top: 8px; }
+    .sheet-form.visible { display: flex; }
+
+    .categories-scroll {
+      display: flex; gap: 8px;
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+
+    .category-pill {
+      padding: 8px 16px;
+      background: var(--color-bg-2);
+      border: 1.5px solid var(--color-stroke-1);
+      border-radius: var(--radius-circular);
+      font-size: 14px; white-space: nowrap;
+      cursor: pointer; font-family: var(--font); color: var(--color-fg-1);
+      transition: background var(--t-fast), border-color var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .category-pill.selected {
+      background: var(--color-brand-tint);
+      border-color: var(--color-brand);
+      color: var(--color-brand); font-weight: 600;
+    }
+
+    .sheet-save-row { display: flex; gap: 8px; }
+    .btn-save {
+      flex: 2; height: 48px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+    }
+    .btn-cancel {
+      flex: 1; height: 48px;
+      background: var(--color-bg-2); color: var(--color-fg-2);
+      border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       SUCCESS OVERLAY
+       ============================================================ */
+    .success-overlay {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.96);
+      z-index: 300;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .success-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .success-circle {
+      width: 80px; height: 80px;
+      border-radius: var(--radius-circular);
+      background: var(--color-success);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .success-circle svg { width: 48px; height: 48px; }
+
+    .checkmark-path {
+      stroke-dasharray: 52;
+      stroke-dashoffset: 52;
+      animation: drawCheck 500ms ease forwards 100ms;
+    }
+    @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+    .success-text { font-size: 24px; font-weight: 700; color: var(--color-fg-1); }
+
+    /* ============================================================
+       HISTORY TAB
+       ============================================================ */
+    #tab-history { background: var(--color-bg-2); }
+
+    .history-header {
+      background: var(--color-bg-1);
+      padding: 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+    .history-title { font-size: 20px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 12px; }
+
+    /* Segmented control */
+    .segmented-control {
+      display: flex;
+      background: var(--color-bg-2);
+      border-radius: var(--radius-md);
+      padding: 2px;
+    }
+    .seg-btn {
+      flex: 1; height: 32px;
+      background: none; border: none;
+      border-radius: var(--radius-sm);
+      font-size: 12px; font-weight: 600; font-family: var(--font);
+      color: var(--color-fg-2);
+      cursor: pointer;
+      transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .seg-btn.active { background: var(--color-bg-1); color: var(--color-fg-1); box-shadow: var(--shadow-2); }
+
+    .history-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .stat-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      box-shadow: var(--shadow-2);
+    }
+    .stat-label {
+      font-size: 11px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px;
+    }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--color-fg-1); line-height: 1; }
+    .stat-sub   { font-size: 12px; color: var(--color-fg-2); margin-top: 3px; }
+
+    .ratio-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 14px; box-shadow: var(--shadow-2);
+      grid-column: 1 / -1;
+    }
+    .ratio-bar {
+      height: 8px; border-radius: var(--radius-circular);
+      overflow: hidden; background: var(--color-bg-2);
+      display: flex; margin: 8px 0;
+    }
+    .ratio-bar-buy  { background: var(--color-success); transition: width var(--t-slow); }
+    .ratio-bar-give { background: var(--color-error);   transition: width var(--t-slow); }
+    .ratio-labels { display: flex; justify-content: space-between; font-size: 12px; }
+    .ratio-buy-label  { color: var(--color-success); font-weight: 700; }
+    .ratio-give-label { color: var(--color-error);   font-weight: 700; }
+
+    /* Transaction list */
+    .date-group { display: flex; flex-direction: column; gap: 8px; }
+    .date-group-label {
+      font-size: 12px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px; padding: 0 4px;
+    }
+    .entry-card {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--shadow-2);
+    }
+    .entry-emoji {
+      font-size: 22px; width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--color-bg-2);
+      border-radius: var(--radius-md); flex-shrink: 0;
+    }
+    .entry-info   { flex: 1; min-width: 0; }
+    .entry-name   { font-size: 15px; font-weight: 600; color: var(--color-fg-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-time   { font-size: 12px; color: var(--color-fg-2); margin-top: 2px; }
+    .entry-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .entry-amount { font-size: 15px; font-weight: 700; color: var(--color-fg-1); }
+    .entry-work   { font-size: 11px; color: var(--color-fg-2); }
+    .entry-badge  { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-circular); }
+    .entry-badge.buy     { background: #e8f5e9; color: var(--color-success); }
+    .entry-badge.give_up { background: #fdeeee; color: var(--color-error); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 52px 24px; color: var(--color-fg-2); }
+    .empty-state-icon  { font-size: 48px; margin-bottom: 12px; }
+    .empty-state-title { font-size: 18px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 8px; }
+    .empty-state-text  { font-size: 14px; line-height: 1.55; }
+
+    /* ============================================================
+       SETTINGS TAB
+       ============================================================ */
+    #tab-settings { background: var(--color-bg-2); }
+
+    .settings-header {
+      background: var(--color-bg-1);
+      padding: 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      position: sticky; top: 0; z-index: 10;
+      flex-shrink: 0;
+    }
+    .settings-title { font-size: 20px; font-weight: 700; color: var(--color-fg-1); }
+
+    .settings-body { padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+
+    .settings-section { display: flex; flex-direction: column; gap: 6px; }
+    .settings-section-label {
+      font-size: 12px; font-weight: 700; color: var(--color-fg-2);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 0 4px;
+    }
+    .settings-group {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-2);
+    }
+    .settings-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-stroke-1);
+      gap: 12px; min-height: 52px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-row-label { font-size: 15px; color: var(--color-fg-1); flex: 1; }
+    .settings-row-value { font-size: 14px; color: var(--color-fg-2); }
+
+    .settings-row-input {
+      flex: 1; border: none; outline: none;
+      font-size: 15px; font-family: var(--font);
+      color: var(--color-fg-1); text-align: right;
+      background: transparent; max-width: 140px;
+    }
+    .settings-select {
+      border: none; outline: none;
+      font-size: 14px; font-family: var(--font);
+      color: var(--color-brand); background: transparent;
+      cursor: pointer;
+    }
+
+    .btn-logout      { background: none; border: none; color: var(--color-error); font-size: 15px; font-family: var(--font); cursor: pointer; }
+    .btn-link        { background: none; border: none; color: var(--color-brand); font-size: 15px; font-family: var(--font); cursor: pointer; }
+    .btn-danger-link { background: none; border: none; color: var(--color-error); font-size: 15px; font-family: var(--font); cursor: pointer; }
+
+    .rate-display {
+      font-size: 13px; color: var(--color-brand); font-weight: 700;
+      padding: 10px 16px;
+      background: var(--color-brand-tint);
+      border-top: 1px solid var(--color-stroke-1);
+    }
+
+    /* Category rows in settings */
+    .category-row {
+      display: flex; align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-stroke-1); gap: 8px;
+    }
+    .category-row:last-child { border-bottom: none; }
+    .category-row-name { flex: 1; font-size: 15px; color: var(--color-fg-1); }
+    .btn-delete-cat {
+      background: none; border: none;
+      color: var(--color-error); font-size: 20px;
+      cursor: pointer; padding: 2px 4px; line-height: 1;
+      opacity: 0; pointer-events: none;
+    }
+    .category-row.custom .btn-delete-cat { opacity: 1; pointer-events: all; }
+
+    /* ============================================================
+       MODAL
+       ============================================================ */
+    .modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 400;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--t-normal);
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--color-bg-1);
+      border-radius: var(--radius-xl);
+      padding: 24px; width: 100%; max-width: 340px;
+      box-shadow: var(--shadow-8);
+      transform: scale(.92);
+      transition: transform var(--t-normal);
+    }
+    .modal-overlay.visible .modal { transform: scale(1); }
+
+    .modal-title   { font-size: 18px; font-weight: 700; color: var(--color-fg-1); margin-bottom: 14px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+
+    .confirm-text { font-size: 14px; color: var(--color-fg-2); line-height: 1.55; }
+
+    .btn-modal-cancel {
+      flex: 1; height: 44px;
+      background: var(--color-bg-2); color: var(--color-fg-1);
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+    .btn-modal-danger {
+      flex: 1; height: 44px;
+      background: var(--color-error); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+    .btn-modal-primary {
+      flex: 2; height: 44px;
+      background: var(--color-brand); color: white;
+      border: none; border-radius: var(--radius-md);
+      font-size: 15px; font-weight: 600; font-family: var(--font); cursor: pointer;
+    }
+
+    /* ============================================================
+       SCROLLBAR STYLING
+       ============================================================ */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-stroke-1); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div id="app-wrapper">
+<div id="app">
+
+  <!-- ============================================================
+       AUTH SCREEN
+       ============================================================ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-inner">
+      <div class="auth-logo">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M26 9v3c4 .7 7 3.6 7 7h-5c0-2-1.8-3.5-4-3.5s-4 1.5-4 3.5c0 2.1 1.6 3 5 3.8 5 1.3 11 2.8 11 9.7 0 3.4-3.1 6.2-7 6.9v3h-5v-3c-4-.7-7-3.6-7-7h5c0 2 1.8 3.5 4 3.5s4-1.5 4-3.5c0-2.1-1.6-3-5-3.8-5-1.3-11-2.8-11-9.7 0-3.4 3.1-6.2 7-6.9V9h5z"/>
+        </svg>
+      </div>
+      <div class="auth-title">Spendy</div>
+      <div class="auth-subtitle">See what your money really costs</div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="form-login" onsubmit="handleLogin(event)">
+        <div class="input-group">
+          <label class="input-label" for="login-username">Username</label>
+          <input class="input-field" type="text" id="login-username" placeholder="Enter username" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="login-password">Password</label>
+          <input class="input-field" type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" required>
+        </div>
+        <div class="error-msg" id="login-error" role="alert"></div>
+        <button type="submit" class="btn-primary">Log In</button>
+      </form>
+
+      <!-- Sign Up Form (hidden by default) -->
+      <form class="auth-form" id="form-signup" style="display:none" onsubmit="handleSignup(event)">
+        <div class="input-group">
+          <label class="input-label" for="signup-username">Username</label>
+          <input class="input-field" type="text" id="signup-username" placeholder="Choose a username" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="signup-password">Password</label>
+          <input class="input-field" type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" required>
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="signup-confirm">Confirm Password</label>
+          <input class="input-field" type="password" id="signup-confirm" placeholder="Repeat password" autocomplete="new-password" required>
+        </div>
+        <div class="error-msg" id="signup-error" role="alert"></div>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+
+      <div class="auth-toggle" id="auth-toggle-login">
+        Don't have an account? <a onclick="switchAuthMode('signup')" role="button">Sign Up</a>
+      </div>
+      <div class="auth-toggle" id="auth-toggle-signup" style="display:none">
+        Already have an account? <a onclick="switchAuthMode('login')" role="button">Log In</a>
+      </div>
+    </div>
+  </div><!-- end #screen-auth -->
+
+
+  <!-- ============================================================
+       ONBOARDING SCREEN
+       ============================================================ -->
+  <div id="screen-onboarding" class="screen">
+    <div class="progress-dots">
+      <div class="progress-dot active" data-dot="1"></div>
+      <div class="progress-dot"        data-dot="2"></div>
+      <div class="progress-dot"        data-dot="3"></div>
+      <div class="progress-dot"        data-dot="4"></div>
+      <div class="progress-dot"        data-dot="5"></div>
+    </div>
+
+    <div class="onboarding-body">
+
+      <!-- Step 1: Welcome -->
+      <div class="onboarding-step active" data-step="1">
+        <div class="step-emoji">👋</div>
+        <div class="step-title">Welcome to Spendy</div>
+        <div class="step-subtitle">See what your money really costs — in time and effort.</div>
+        <div class="step-content">
+          <div style="background:var(--color-brand-tint);border-radius:var(--radius-xl);padding:20px">
+            <p style="font-size:15px;color:var(--color-fg-2);line-height:1.65">
+              Spendy converts every purchase into
+              <strong style="color:var(--color-brand)">minutes of your life</strong>
+              spent working — helping you make mindful spending decisions.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Income Type -->
+      <div class="onboarding-step" data-step="2">
+        <div class="step-emoji">💰</div>
+        <div class="step-title">How do you earn?</div>
+        <div class="step-subtitle">We'll use this to calculate your real earning rate.</div>
+        <div class="step-content">
+          <div class="radio-group" id="income-type-group">
+            <label class="radio-option selected" data-value="hourly">
+              <input type="radio" name="incomeType" value="hourly" checked>
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Hourly</div><div class="radio-desc">Paid per hour worked</div></div>
+            </label>
+            <label class="radio-option" data-value="monthly">
+              <input type="radio" name="incomeType" value="monthly">
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Monthly</div><div class="radio-desc">Fixed monthly salary</div></div>
+            </label>
+            <label class="radio-option" data-value="annual">
+              <input type="radio" name="incomeType" value="annual">
+              <div class="radio-dot"></div>
+              <div><div class="radio-label">Annual</div><div class="radio-desc">Yearly salary or income</div></div>
+            </label>
+          </div>
+          <div class="input-group">
+            <label class="input-label" id="income-amount-label">Hourly Rate ($)</label>
+            <input class="input-field" type="number" id="onboarding-income-amount" placeholder="e.g. 25" min="0" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Hours Worked -->
+      <div class="onboarding-step" data-step="3">
+        <div class="step-emoji">⏰</div>
+        <div class="step-title">Hours per week</div>
+        <div class="step-subtitle">How many hours do you typically work each week?</div>
+        <div class="step-content">
+          <div class="input-group">
+            <label class="input-label" for="onboarding-hours">Hours per week</label>
+            <input class="input-field" type="number" id="onboarding-hours" placeholder="40" value="40" min="1" max="168">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Real Wages -->
+      <div class="onboarding-step" data-step="4">
+        <div class="step-emoji">🎯</div>
+        <div class="step-title">Real wage mode</div>
+        <div class="step-subtitle">Account for fixed monthly expenses to see your true disposable earning rate.</div>
+        <div class="step-content">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Enable Real Wages</div>
+              <div style="font-size:13px;color:var(--color-fg-2);margin-top:2px">Deduct fixed expenses from rate</div>
+            </div>
+            <button class="toggle" id="onboarding-real-wage-toggle" type="button" onclick="toggleRealWage(this)"></button>
+          </div>
+          <div id="real-wage-input" style="display:none">
+            <div class="input-group">
+              <label class="input-label" for="onboarding-expenses">Monthly Fixed Expenses ($)</label>
+              <input class="input-field" type="number" id="onboarding-expenses" placeholder="e.g. 2000" min="0" step="0.01">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: All Set -->
+      <div class="onboarding-step" data-step="5">
+        <div class="step-emoji">🎉</div>
+        <div class="step-title">You're all set!</div>
+        <div class="step-subtitle">Here's what every minute of your work is worth:</div>
+        <div class="step-content">
+          <div class="result-highlight">
+            <div class="rate" id="onboarding-rate-display">$0.0000</div>
+            <div class="rate-label">per minute of work</div>
+          </div>
+          <p style="font-size:14px;color:var(--color-fg-2);line-height:1.65;padding:0 4px">
+            Every purchase you track will show exactly how many minutes of your life it took to earn that money. You can update your income any time in Settings.
+          </p>
+        </div>
+      </div>
+
+    </div><!-- end .onboarding-body -->
+
+    <div class="onboarding-footer">
+      <button class="btn-primary" id="onboarding-next-btn" type="button" onclick="onboardingNext()">Continue</button>
+      <button class="btn-back"    id="onboarding-back-btn" type="button" onclick="onboardingBack()" style="display:none">← Back</button>
+    </div>
+  </div><!-- end #screen-onboarding -->
+
+
+  <!-- ============================================================
+       APP SCREEN
+       ============================================================ -->
+  <div id="screen-app" class="screen">
+
+    <!-- === CALCULATOR TAB === -->
+    <div class="tab-content active" id="tab-calculator">
+
+      <!-- Dollar Bill -->
+      <div class="dollar-bill" id="dollar-bill">
+        <div class="bill-circle bill-circle-left"></div>
+        <div class="bill-circle bill-circle-right"></div>
+        <div class="bill-amount" id="bill-amount">$0</div>
+        <div class="bill-minutes" id="bill-minutes">Enter an amount below</div>
+      </div>
+
+      <!-- Keypad -->
+      <div class="keypad-container">
+        <div class="keypad-grid">
+          <button class="key-btn" type="button" onclick="keyPress('1')">1</button>
+          <button class="key-btn" type="button" onclick="keyPress('2')">2</button>
+          <button class="key-btn" type="button" onclick="keyPress('3')">3</button>
+          <button class="key-btn" type="button" onclick="keyPress('4')">4</button>
+          <button class="key-btn" type="button" onclick="keyPress('5')">5</button>
+          <button class="key-btn" type="button" onclick="keyPress('6')">6</button>
+          <button class="key-btn" type="button" onclick="keyPress('7')">7</button>
+          <button class="key-btn" type="button" onclick="keyPress('8')">8</button>
+          <button class="key-btn" type="button" onclick="keyPress('9')">9</button>
+          <button class="key-btn" type="button" onclick="keyPress('.')">.</button>
+          <button class="key-btn" type="button" onclick="keyPress('0')">0</button>
+          <button class="key-btn key-delete" type="button" onclick="keyPress('backspace')" aria-label="Backspace">⌫</button>
+        </div>
+        <button class="enter-btn" type="button" onclick="handleEnter()">Enter</button>
+      </div>
+    </div><!-- end #tab-calculator -->
+
+
+    <!-- === HISTORY TAB === -->
+    <div class="tab-content" id="tab-history">
+      <div class="history-header">
+        <div class="history-title">History</div>
+        <div class="segmented-control" role="tablist" aria-label="Time period">
+          <button class="seg-btn active" type="button" data-period="daily"   onclick="setHistoryPeriod('daily')">Daily</button>
+          <button class="seg-btn"        type="button" data-period="weekly"  onclick="setHistoryPeriod('weekly')">Weekly</button>
+          <button class="seg-btn"        type="button" data-period="monthly" onclick="setHistoryPeriod('monthly')">Monthly</button>
+          <button class="seg-btn"        type="button" data-period="yearly"  onclick="setHistoryPeriod('yearly')">Yearly</button>
+        </div>
+      </div>
+      <div class="history-body" id="history-body"></div>
+    </div><!-- end #tab-history -->
+
+
+    <!-- === SETTINGS TAB === -->
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-header">
+        <div class="settings-title">Settings</div>
+      </div>
+      <div class="settings-body" id="settings-body"></div>
+    </div><!-- end #tab-settings -->
+
+
+    <!-- Tab Bar -->
+    <nav class="tab-bar" role="tablist">
+      <button class="tab-btn active" type="button" data-tab="calculator" onclick="switchTab('calculator')" aria-label="Calculator">
+        <!-- Calculator icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"/>
+          <line x1="8" y1="6" x2="16" y2="6"/>
+          <line x1="8" y1="10" x2="10" y2="10"/>
+          <line x1="12" y1="10" x2="14" y2="10"/>
+          <line x1="16" y1="10" x2="16" y2="10" stroke-width="2.5"/>
+          <line x1="8" y1="14" x2="10" y2="14"/>
+          <line x1="12" y1="14" x2="14" y2="14"/>
+          <line x1="16" y1="14" x2="16" y2="14" stroke-width="2.5"/>
+          <line x1="8" y1="18" x2="10" y2="18"/>
+          <line x1="12" y1="18" x2="14" y2="18"/>
+          <line x1="16" y1="18" x2="16" y2="18" stroke-width="2.5"/>
+        </svg>
+        Calculator
+      </button>
+      <button class="tab-btn" type="button" data-tab="history" onclick="switchTab('history')" aria-label="History">
+        <!-- Clock icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        History
+      </button>
+      <button class="tab-btn" type="button" data-tab="settings" onclick="switchTab('settings')" aria-label="Settings">
+        <!-- Gear icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Settings
+      </button>
+    </nav>
+
+
+    <!-- Result Bottom Sheet -->
+    <div class="overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+    <div class="bottom-sheet" id="result-sheet" role="dialog" aria-modal="true" aria-label="Purchase decision">
+      <div class="sheet-handle"></div>
+
+      <div class="sheet-result">
+        <div class="sheet-amount" id="sheet-amount-text"></div>
+        <div class="sheet-equals">=</div>
+        <div class="sheet-time"   id="sheet-time-text"></div>
+      </div>
+
+      <div class="action-buttons" id="sheet-actions">
+        <button class="action-btn buy-btn"     type="button" onclick="selectAction('buy')">
+          <span class="btn-em">🛒</span><span>Buy</span>
+        </button>
+        <button class="action-btn giveup-btn"  type="button" onclick="selectAction('give_up')">
+          <span class="btn-em">🚫</span><span>Give Up</span>
+        </button>
+        <button class="action-btn notrack-btn" type="button" onclick="selectAction('no_track')">
+          <span class="btn-em">❌</span><span>No Track</span>
+        </button>
+      </div>
+
+      <div class="sheet-form" id="sheet-form">
+        <div class="input-group">
+          <label class="input-label" for="entry-name-input">What was this for?</label>
+          <input class="input-field" type="text" id="entry-name-input" placeholder="e.g. Iced Latte" maxlength="80">
+        </div>
+        <div class="categories-scroll" id="sheet-categories" role="listbox" aria-label="Category"></div>
+        <div class="sheet-save-row">
+          <button class="btn-save"   type="button" onclick="saveEntry()">Save</button>
+          <button class="btn-cancel" type="button" onclick="cancelEntry()">Cancel</button>
+        </div>
+      </div>
+    </div><!-- end .bottom-sheet -->
+
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="success-overlay" role="status" aria-live="polite">
+      <div class="success-circle">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path class="checkmark-path"
+            d="M12 24 L21 33 L36 15"
+            stroke="white" stroke-width="4"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="success-text">Recorded!</div>
+    </div>
+
+
+    <!-- Modal (shared: Add Category + Confirm dialogs) -->
+    <div class="modal-overlay" id="modal-overlay" onclick="onModalOverlayClick(event)">
+      <div class="modal" id="modal-content" role="dialog" aria-modal="true"></div>
+    </div>
+
+  </div><!-- end #screen-app -->
+
+</div><!-- end #app -->
+</div><!-- end #app-wrapper -->
+
+<script>
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const DEFAULT_CATEGORIES = [
+  '🍫 Snacks', '☕ Coffee', '🍽️ Dining', '🛍️ Shopping',
+  '🎮 Entertainment', '🚗 Transport', '📱 Tech', '💊 Health',
+  '📚 Education', '🎁 Gifts', '❓ Other'
+];
+
+const STORAGE_KEY = 'spendy_users';
+const SESSION_KEY = 'spendy_user';
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+let currentUser    = null;
+let calcInput      = '0';
+let currentAmount  = 0;
+let currentDecision= null;
+let historyPeriod  = 'daily';
+let onboardingStep = 1;
+let onboardingData = {
+  incomeType: 'hourly', incomeAmount: 0,
+  hoursPerWeek: 40, realWageEnabled: false, monthlyFixedExpenses: 0
+};
+
+/* ============================================================
+   SECURITY — XSS prevention
+   ============================================================ */
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str ?? '')));
+  return d.innerHTML;
+}
+
+/* ============================================================
+   CRYPTO — SHA-256 via SubtleCrypto
+   ============================================================ */
+async function hashPassword(password) {
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ============================================================
+   STORAGE HELPERS
+   ============================================================ */
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveUsers(u) { localStorage.setItem(STORAGE_KEY, JSON.stringify(u)); }
+
+function getCurrentUserData() { return getUsers()[currentUser] || null; }
+function saveCurrentUserData(data) {
+  const u = getUsers(); u[currentUser] = data; saveUsers(u);
+}
+
+function getUserSettings()   { return getCurrentUserData()?.settings   || defaultSettings(); }
+function getUserEntries()    { return getCurrentUserData()?.entries    || []; }
+function getUserCategories() { return getCurrentUserData()?.categories || [...DEFAULT_CATEGORIES]; }
+
+function defaultSettings() {
+  return {
+    incomeType: 'hourly', incomeAmount: 10,
+    hoursPerWeek: 40,
+    realWageEnabled: false, monthlyFixedExpenses: 0,
+    onboardingComplete: false
+  };
+}
+
+function generateId() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+/* ============================================================
+   EARNING RATE MATH
+   ============================================================ */
+function calcEarningPerMinute(s) {
+  const { incomeType, incomeAmount, hoursPerWeek, realWageEnabled, monthlyFixedExpenses } = s;
+  let perMin = 0;
+  // 4.333... = average weeks per month (52 weeks / 12 months ≈ 4.33). This
+  // standard payroll approximation matches the spec and common industry usage.
+  const WEEKS_PER_MONTH = 52 / 12;
+  if (incomeType === 'hourly')   perMin = incomeAmount / 60;
+  if (incomeType === 'monthly')  perMin = incomeAmount / (hoursPerWeek * WEEKS_PER_MONTH) / 60;
+  if (incomeType === 'annual')   perMin = incomeAmount / (hoursPerWeek * 52)               / 60;
+  if (realWageEnabled && monthlyFixedExpenses > 0) {
+    perMin = Math.max(0, perMin - monthlyFixedExpenses / (hoursPerWeek * WEEKS_PER_MONTH) / 60);
+  }
+  return perMin;
+}
+
+function formatMinutes(minutes) {
+  if (minutes <= 0) return '0 mins';
+  if (minutes < 1)  return `${Math.round(minutes * 60)} secs`;
+  if (minutes < 60) {
+    const m = Math.round(minutes);
+    return `${m} min${m !== 1 ? 's' : ''}`;
+  }
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  const hStr = `${h} hr${h !== 1 ? 's' : ''}`;
+  return m === 0 ? hStr : `${hStr} ${m} min${m !== 1 ? 's' : ''}`;
+}
+
+function formatCurrency(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+/* ============================================================
+   SCREEN MANAGEMENT
+   ============================================================ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function switchAuthMode(mode) {
+  const isSignup = mode === 'signup';
+  document.getElementById('form-login').style.display      = isSignup ? 'none' : 'flex';
+  document.getElementById('form-signup').style.display     = isSignup ? 'flex' : 'none';
+  document.getElementById('auth-toggle-login').style.display  = isSignup ? 'none'  : 'block';
+  document.getElementById('auth-toggle-signup').style.display = isSignup ? 'block' : 'none';
+  const errId = isSignup ? 'signup-error' : 'login-error';
+  setError(document.getElementById(errId), '');
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+
+  if (!username || !password) return setError(errEl, 'Please enter username and password.');
+
+  const users = getUsers();
+  if (!users[username]) return setError(errEl, 'Account not found. Please sign up.');
+
+  const hash = await hashPassword(password);
+  if (users[username].passwordHash !== hash) return setError(errEl, 'Incorrect password. Try again.');
+
+  setError(errEl, '');
+  sessionStorage.setItem(SESSION_KEY, username);
+  currentUser = username;
+  postLogin();
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const username = document.getElementById('signup-username').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm  = document.getElementById('signup-confirm').value;
+  const errEl    = document.getElementById('signup-error');
+
+  if (!username || !password) return setError(errEl, 'Please fill in all fields.');
+  if (username.length < 3)    return setError(errEl, 'Username must be at least 3 characters.');
+  if (password.length < 6)    return setError(errEl, 'Password must be at least 6 characters.');
+  if (password !== confirm)   return setError(errEl, 'Passwords do not match.');
+
+  const users = getUsers();
+  if (users[username])        return setError(errEl, 'Username already taken. Choose another.');
+
+  const hash = await hashPassword(password);
+  users[username] = {
+    passwordHash: hash,
+    settings:     defaultSettings(),
+    entries:      [],
+    categories:   [...DEFAULT_CATEGORIES]
+  };
+  saveUsers(users);
+
+  setError(errEl, '');
+  sessionStorage.setItem(SESSION_KEY, username);
+  currentUser = username;
+  postLogin();
+}
+
+function postLogin() {
+  const settings = getUserSettings();
+  if (!settings.onboardingComplete) {
+    showScreen('onboarding');
+    startOnboarding();
+  } else {
+    showScreen('app');
+    renderApp();
+  }
+}
+
+function handleLogout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  currentUser = null;
+  calcInput   = '0';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  switchAuthMode('login');
+  showScreen('auth');
+}
+
+function setError(el, msg) {
+  el.textContent = msg;
+  el.classList.toggle('visible', !!msg);
+}
+
+/* ============================================================
+   ONBOARDING
+   ============================================================ */
+function startOnboarding() {
+  onboardingStep = 1;
+  onboardingData = { incomeType: 'hourly', incomeAmount: 0, hoursPerWeek: 40, realWageEnabled: false, monthlyFixedExpenses: 0 };
+  // Reset radio selection UI
+  document.querySelectorAll('#income-type-group .radio-option').forEach(opt => {
+    const isHourly = opt.dataset.value === 'hourly';
+    opt.classList.toggle('selected', isHourly);
+    opt.querySelector('input').checked = isHourly;
+  });
+  document.getElementById('onboarding-income-amount').value = '';
+  document.getElementById('onboarding-hours').value         = '40';
+  document.getElementById('onboarding-real-wage-toggle').classList.remove('on');
+  document.getElementById('real-wage-input').style.display  = 'none';
+  document.getElementById('onboarding-expenses').value      = '';
+  renderOnboardingStep(1);
+}
+
+function renderOnboardingStep(step) {
+  document.querySelectorAll('.onboarding-step').forEach(el =>
+    el.classList.toggle('active', parseInt(el.dataset.step) === step)
+  );
+  document.querySelectorAll('.progress-dot').forEach(dot => {
+    const n = parseInt(dot.dataset.dot);
+    dot.classList.toggle('active', n === step);
+    dot.classList.toggle('done',   n < step);
+  });
+  document.getElementById('onboarding-next-btn').textContent = step === 5 ? 'Get Started!' : 'Continue';
+  document.getElementById('onboarding-back-btn').style.display = step > 1 ? 'block' : 'none';
+  if (step === 2) updateIncomeAmountLabel();
+  if (step === 5) renderOnboardingRate();
+}
+
+function updateIncomeAmountLabel() {
+  const map = { hourly: 'Hourly Rate ($)', monthly: 'Monthly Salary ($)', annual: 'Annual Salary ($)' };
+  document.getElementById('income-amount-label').textContent = map[onboardingData.incomeType] || 'Amount ($)';
+}
+
+function renderOnboardingRate() {
+  const rate = calcEarningPerMinute(onboardingData);
+  document.getElementById('onboarding-rate-display').textContent = '$' + rate.toFixed(4);
+}
+
+function onboardingNext() {
+  if (!collectOnboardingStep(onboardingStep)) return;
+  if (onboardingStep < 5) {
+    onboardingStep++;
+    renderOnboardingStep(onboardingStep);
+  } else {
+    completeOnboarding();
+  }
+}
+
+function onboardingBack() {
+  if (onboardingStep > 1) { onboardingStep--; renderOnboardingStep(onboardingStep); }
+}
+
+function collectOnboardingStep(step) {
+  if (step === 2) {
+    const amt = parseFloat(document.getElementById('onboarding-income-amount').value);
+    if (!amt || amt <= 0) { alert('Please enter a valid income amount.'); return false; }
+    onboardingData.incomeAmount = amt;
+  }
+  if (step === 3) {
+    const hrs = parseFloat(document.getElementById('onboarding-hours').value);
+    if (!hrs || hrs <= 0 || hrs > 168) { alert('Please enter valid hours (1-168).'); return false; }
+    onboardingData.hoursPerWeek = hrs;
+  }
+  if (step === 4) {
+    const toggle = document.getElementById('onboarding-real-wage-toggle');
+    onboardingData.realWageEnabled = toggle.classList.contains('on');
+    if (onboardingData.realWageEnabled) {
+      onboardingData.monthlyFixedExpenses = parseFloat(document.getElementById('onboarding-expenses').value) || 0;
+    }
+  }
+  return true;
+}
+
+function toggleRealWage(btn) {
+  btn.classList.toggle('on');
+  document.getElementById('real-wage-input').style.display = btn.classList.contains('on') ? 'block' : 'none';
+}
+
+function completeOnboarding() {
+  const data = getCurrentUserData();
+  data.settings = {
+    incomeType:           onboardingData.incomeType,
+    incomeAmount:         onboardingData.incomeAmount,
+    hoursPerWeek:         onboardingData.hoursPerWeek,
+    realWageEnabled:      onboardingData.realWageEnabled,
+    monthlyFixedExpenses: onboardingData.monthlyFixedExpenses,
+    onboardingComplete:   true
+  };
+  saveCurrentUserData(data);
+  showScreen('app');
+  renderApp();
+}
+
+/* Income type radio — onboarding */
+document.getElementById('income-type-group').addEventListener('click', function (e) {
+  const opt = e.target.closest('.radio-option');
+  if (!opt) return;
+  document.querySelectorAll('#income-type-group .radio-option').forEach(o => {
+    o.classList.remove('selected');
+    o.querySelector('input').checked = false;
+  });
+  opt.classList.add('selected');
+  opt.querySelector('input').checked = true;
+  onboardingData.incomeType = opt.dataset.value;
+  updateIncomeAmountLabel();
+});
+
+/* ============================================================
+   APP INIT & TAB SWITCHING
+   ============================================================ */
+function renderApp() {
+  calcInput = '0';
+  updateBillDisplay('0', calcEarningPerMinute(getUserSettings()));
+  renderHistory();
+  renderSettings();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'history')  renderHistory();
+  if (tab === 'settings') renderSettings();
+}
+
+/* ============================================================
+   CALCULATOR
+   ============================================================ */
+function updateBillDisplay(input, rate) {
+  const amount  = parseFloat(input) || 0;
+  const amountEl = document.getElementById('bill-amount');
+  const minsEl   = document.getElementById('bill-minutes');
+
+  if (!input || input === '0') {
+    amountEl.textContent = '$0';
+    minsEl.textContent   = 'Enter an amount below';
+    return;
+  }
+
+  // Build readable display preserving trailing dot or decimal zeros
+  const parts    = input.split('.');
+  const intStr   = parseInt(parts[0] || '0', 10).toLocaleString();
+  const display  = parts.length > 1 ? `$${intStr}.${parts[1]}` : `$${intStr}`;
+  amountEl.textContent = display;
+
+  if (rate > 0 && amount > 0) {
+    minsEl.textContent = `That's ${formatMinutes(amount / rate)} of work`;
+  } else {
+    minsEl.textContent = amount > 0 ? 'Set your income in Settings' : 'Enter an amount below';
+  }
+}
+
+function keyPress(key) {
+  if (key === 'backspace') {
+    calcInput = calcInput.length > 1 ? calcInput.slice(0, -1) : '0';
+  } else if (key === '.') {
+    if (!calcInput.includes('.')) calcInput += '.';
+  } else {
+    // Guard: max 2 decimal places, max 8 integer digits
+    if (calcInput.includes('.') && calcInput.split('.')[1].length >= 2) return;
+    if (!calcInput.includes('.') && calcInput.replace(/^0/, '').length >= 8) return;
+    calcInput = (calcInput === '0') ? key : calcInput + key;
+  }
+
+  const rate = calcEarningPerMinute(getUserSettings());
+  updateBillDisplay(calcInput, rate);
+
+  // Pulse animation
+  const el = document.getElementById('bill-amount');
+  el.classList.remove('pulse');
+  void el.offsetWidth; // Force reflow to restart CSS pulse animation
+  el.classList.add('pulse');
+}
+
+function handleEnter() {
+  const amount = parseFloat(calcInput) || 0;
+  if (amount <= 0) return;
+
+  currentAmount = amount;
+  const rate    = calcEarningPerMinute(getUserSettings());
+  const minutes = rate > 0 ? amount / rate : 0;
+
+  document.getElementById('sheet-amount-text').textContent = formatCurrency(amount);
+  document.getElementById('sheet-time-text').textContent   = `${formatMinutes(minutes)} of work`;
+
+  // Reset to action buttons view
+  document.getElementById('sheet-actions').style.display = 'flex';
+  document.getElementById('sheet-form').classList.remove('visible');
+  currentDecision = null;
+  openSheet();
+}
+
+function openSheet() {
+  document.getElementById('sheet-overlay').classList.add('visible');
+  document.getElementById('result-sheet').classList.add('open');
+}
+
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('visible');
+  document.getElementById('result-sheet').classList.remove('open');
+  document.getElementById('sheet-form').classList.remove('visible');
+  document.getElementById('sheet-actions').style.display = 'flex';
+  currentDecision = null;
+}
+
+function selectAction(decision) {
+  if (decision === 'no_track') { closeSheet(); resetCalc(); return; }
+
+  currentDecision = decision;
+  document.getElementById('sheet-actions').style.display = 'none';
+
+  // Render category pills
+  const categories = getUserCategories();
+  document.getElementById('sheet-categories').innerHTML =
+    categories.map(cat =>
+      `<button class="category-pill" type="button" role="option" onclick="selectCategory(this)">${escapeHtml(cat)}</button>`
+    ).join('');
+
+  document.getElementById('entry-name-input').value = '';
+  document.getElementById('sheet-form').classList.add('visible');
+}
+
+function selectCategory(btn) {
+  document.querySelectorAll('#sheet-categories .category-pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function saveEntry() {
+  const name     = document.getElementById('entry-name-input').value.trim() || 'Unnamed';
+  const selCat   = document.querySelector('#sheet-categories .category-pill.selected');
+  const category = selCat ? selCat.textContent : '❓ Other';
+
+  const settings = getUserSettings();
+  const rate     = calcEarningPerMinute(settings);
+  const entry    = {
+    id:        generateId(),
+    amount:    currentAmount,
+    minutes:   rate > 0 ? currentAmount / rate : 0,
+    decision:  currentDecision,
+    name,
+    category,
+    timestamp: new Date().toISOString()
+  };
+
+  const data = getCurrentUserData();
+  data.entries = data.entries || [];
+  data.entries.unshift(entry);
+  saveCurrentUserData(data);
+
+  closeSheet();
+  showSuccess();
+  resetCalc();
+}
+
+function cancelEntry() { closeSheet(); }
+
+function resetCalc() {
+  calcInput = '0';
+  updateBillDisplay('0', calcEarningPerMinute(getUserSettings()));
+}
+
+function showSuccess() {
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.add('visible');
+  // Re-trigger SVG animation
+  const path = overlay.querySelector('.checkmark-path');
+  path.style.animation = 'none';
+  void path.offsetWidth; // Force reflow to reset SVG animation before replaying
+  path.style.animation = '';
+  setTimeout(() => overlay.classList.remove('visible'), 1500);
+}
+
+/* Keyboard support for calculator */
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('tab-calculator').classList.contains('active')) return;
+  if (document.getElementById('result-sheet').classList.contains('open')) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); keyPress(e.key); }
+  else if (e.key === '.')            { e.preventDefault(); keyPress('.'); }
+  else if (e.key === 'Backspace')    { e.preventDefault(); keyPress('backspace'); }
+  else if (e.key === 'Enter')        { e.preventDefault(); handleEnter(); }
+});
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+function setHistoryPeriod(period) {
+  historyPeriod = period;
+  document.querySelectorAll('.seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.period === period)
+  );
+  renderHistory();
+}
+
+function getFilteredEntries(period) {
+  const now     = new Date();
+  const entries = getUserEntries();
+  return entries.filter(e => {
+    const d = new Date(e.timestamp);
+    if (period === 'daily')   return d.toDateString() === now.toDateString();
+    if (period === 'weekly') {
+      const ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0,0,0,0);
+      return d >= ws;
+    }
+    if (period === 'monthly') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'yearly')  return d.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+function renderHistory() {
+  const body    = document.getElementById('history-body');
+  const entries = getFilteredEntries(historyPeriod);
+
+  if (entries.length === 0) {
+    body.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-title">No entries yet</div>
+        <div class="empty-state-text">Start tracking on the Calculator tab!</div>
+      </div>`;
+    return;
+  }
+
+  const bought   = entries.filter(e => e.decision === 'buy');
+  const gaveUp   = entries.filter(e => e.decision === 'give_up');
+  const totalAmt = entries.reduce((s, e) => s + e.amount, 0);
+  const totalMin = entries.reduce((s, e) => s + e.minutes, 0);
+  const boughtAmt= bought.reduce((s, e) => s + e.amount, 0);
+  const gaveAmt  = gaveUp.reduce((s, e) => s + e.amount, 0);
+  const buyPct   = entries.length ? Math.round(bought.length / entries.length * 100) : 0;
+  const givePct  = 100 - buyPct;
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Tracked</div>
+        <div class="stat-value">${entries.length}</div>
+        <div class="stat-sub">${formatMinutes(totalMin)} of work</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Amount</div>
+        <div class="stat-value">${formatCurrency(totalAmt)}</div>
+        <div class="stat-sub">${entries.length} entries</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bought</div>
+        <div class="stat-value" style="color:var(--color-success)">${bought.length}</div>
+        <div class="stat-sub">${formatCurrency(boughtAmt)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Given Up</div>
+        <div class="stat-value" style="color:var(--color-error)">${gaveUp.length}</div>
+        <div class="stat-sub">${formatCurrency(gaveAmt)} saved</div>
+      </div>
+      <div class="ratio-card">
+        <div class="stat-label">Buy vs Give Up</div>
+        <div class="ratio-bar">
+          <div class="ratio-bar-buy"  style="width:${buyPct}%"></div>
+          <div class="ratio-bar-give" style="width:${givePct}%"></div>
+        </div>
+        <div class="ratio-labels">
+          <span class="ratio-buy-label">🛒 ${buyPct}% bought</span>
+          <span class="ratio-give-label">${givePct}% gave up 🚫</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Group entries by date
+  const groups = {};
+  entries.forEach(e => {
+    const label = new Date(e.timestamp).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    (groups[label] = groups[label] || []).push(e);
+  });
+
+  for (const [dateLabel, group] of Object.entries(groups)) {
+    html += `<div class="date-group"><div class="date-group-label">${escapeHtml(dateLabel)}</div>`;
+    group.forEach(e => {
+      const em = (e.category || '❓').split(' ')[0];
+      html += `
+        <div class="entry-card">
+          <div class="entry-emoji">${escapeHtml(em)}</div>
+          <div class="entry-info">
+            <div class="entry-name">${escapeHtml(e.name)}</div>
+            <div class="entry-time">${relativeTime(e.timestamp)}</div>
+          </div>
+          <div class="entry-right">
+            <div class="entry-amount">${formatCurrency(e.amount)}</div>
+            <div class="entry-work">${formatMinutes(e.minutes)}</div>
+            <div class="entry-badge ${e.decision === 'buy' ? 'buy' : 'give_up'}">
+              ${e.decision === 'buy' ? 'Bought' : 'Gave Up'}
+            </div>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function relativeTime(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)   return 'Just now';
+  if (mins < 60)  return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)   return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7)   return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings() {
+  const s    = getUserSettings();
+  const cats = getUserCategories();
+  const rate = calcEarningPerMinute(s);
+  const body = document.getElementById('settings-body');
+
+  body.innerHTML = `
+    <!-- Profile -->
+    <div class="settings-section">
+      <div class="settings-section-label">Profile</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Username</span>
+          <span class="settings-row-value">${escapeHtml(currentUser)}</span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Session</span>
+          <button class="btn-logout" type="button" onclick="handleLogout()">Log Out →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income -->
+    <div class="settings-section">
+      <div class="settings-section-label">Income</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Income Type</span>
+          <select class="settings-select" id="st-income-type" onchange="updateSetting('incomeType', this.value)">
+            <option value="hourly"  ${s.incomeType === 'hourly'  ? 'selected' : ''}>Hourly</option>
+            <option value="monthly" ${s.incomeType === 'monthly' ? 'selected' : ''}>Monthly</option>
+            <option value="annual"  ${s.incomeType === 'annual'  ? 'selected' : ''}>Annual</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Income Amount</span>
+          <input class="settings-row-input" type="number" id="st-income-amount"
+            value="${s.incomeAmount}" min="0" step="0.01"
+            onchange="updateSetting('incomeAmount', parseFloat(this.value) || 0)">
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Hours / Week</span>
+          <input class="settings-row-input" type="number" id="st-hours"
+            value="${s.hoursPerWeek}" min="1" max="168"
+            onchange="updateSetting('hoursPerWeek', parseFloat(this.value) || 40)">
+        </div>
+        <div class="rate-display" id="st-rate">Current rate: $${rate.toFixed(4)}/min</div>
+      </div>
+    </div>
+
+    <!-- Real Wages -->
+    <div class="settings-section">
+      <div class="settings-section-label">Real Wages</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Real Wage Mode</div>
+            <div style="font-size:12px;color:var(--color-fg-2);margin-top:2px">Deduct fixed monthly expenses</div>
+          </div>
+          <button class="toggle ${s.realWageEnabled ? 'on' : ''}" type="button" id="st-real-wage-toggle"
+            onclick="toggleSettingsRealWage(this)"></button>
+        </div>
+        <div id="st-expenses-row" style="display:${s.realWageEnabled ? 'flex' : 'none'};
+          align-items:center;padding:14px 16px;border-top:1px solid var(--color-stroke-1);gap:12px;min-height:52px">
+          <span class="settings-row-label">Monthly Fixed Expenses</span>
+          <input class="settings-row-input" type="number" id="st-expenses"
+            value="${s.monthlyFixedExpenses}" min="0" step="0.01"
+            onchange="updateSetting('monthlyFixedExpenses', parseFloat(this.value) || 0)">
+        </div>
+        <div class="rate-display" id="st-adj-rate"
+          style="display:${s.realWageEnabled ? 'block' : 'none'}">
+          Adjusted rate: $${rate.toFixed(4)}/min
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="settings-section">
+      <div class="settings-section-label">Categories</div>
+      <div class="settings-group">
+        ${cats.map((cat, i) => {
+          const isDef = DEFAULT_CATEGORIES.includes(cat);
+          return `<div class="category-row ${isDef ? 'default' : 'custom'}">
+            <span class="category-row-name">${escapeHtml(cat)}</span>
+            <button class="btn-delete-cat" type="button" onclick="deleteCategory(${i})" aria-label="Delete category">×</button>
+          </div>`;
+        }).join('')}
+        <div class="settings-row" style="border-top:1px solid var(--color-stroke-1)">
+          <button class="btn-link" type="button" onclick="showAddCategoryModal()">+ Add Category</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="settings-section">
+      <div class="settings-section-label">Data</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Export Data</span>
+          <button class="btn-link" type="button" onclick="exportData()">Download JSON →</button>
+        </div>
+        <div class="settings-row">
+          <span class="settings-row-label">Clear History</span>
+          <button class="btn-danger-link" type="button" onclick="showClearConfirm()">Clear All →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="settings-section">
+      <div class="settings-section-label">About</div>
+      <div class="settings-group">
+        <div class="settings-row">
+          <span class="settings-row-label">Version</span>
+          <span class="settings-row-value">1.0.0</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function updateSetting(field, value) {
+  const data = getCurrentUserData();
+  data.settings[field] = value;
+  saveCurrentUserData(data);
+  refreshRateDisplays();
+}
+
+function toggleSettingsRealWage(btn) {
+  btn.classList.toggle('on');
+  const on = btn.classList.contains('on');
+  updateSetting('realWageEnabled', on);
+  const expRow  = document.getElementById('st-expenses-row');
+  const adjRate = document.getElementById('st-adj-rate');
+  if (expRow)  expRow.style.display  = on ? 'flex'  : 'none';
+  if (adjRate) adjRate.style.display = on ? 'block' : 'none';
+}
+
+function refreshRateDisplays() {
+  const rate = calcEarningPerMinute(getUserSettings());
+  const mainRate = document.getElementById('st-rate');
+  const adjRate  = document.getElementById('st-adj-rate');
+  if (mainRate) mainRate.textContent = `Current rate: $${rate.toFixed(4)}/min`;
+  if (adjRate)  adjRate.textContent  = `Adjusted rate: $${rate.toFixed(4)}/min`;
+  // Keep calculator bill in sync
+  updateBillDisplay(calcInput, rate);
+}
+
+function deleteCategory(idx) {
+  const data = getCurrentUserData();
+  const cats = data.categories || [...DEFAULT_CATEGORIES];
+  if (DEFAULT_CATEGORIES.includes(cats[idx])) return; // protect defaults
+  cats.splice(idx, 1);
+  data.categories = cats;
+  saveCurrentUserData(data);
+  renderSettings();
+}
+
+function showAddCategoryModal() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Add Category</div>
+    <div class="input-group">
+      <label class="input-label" for="new-cat-input">Emoji + Name</label>
+      <input class="input-field" type="text" id="new-cat-input"
+        placeholder="🎵 Music" maxlength="40">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel"  type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-primary" type="button" onclick="addCategory()">Add</button>
+    </div>`;
+  openModal();
+  setTimeout(() => document.getElementById('new-cat-input').focus(), 120);
+}
+
+function addCategory() {
+  const input = document.getElementById('new-cat-input');
+  const val   = input.value.trim();
+  if (!val) { input.focus(); return; }
+  const data = getCurrentUserData();
+  data.categories = data.categories || [...DEFAULT_CATEGORIES];
+  data.categories.push(val);
+  saveCurrentUserData(data);
+  closeModal();
+  renderSettings();
+}
+
+function showClearConfirm() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Clear All History?</div>
+    <div class="confirm-text">This will permanently delete all your spending entries. This action cannot be undone.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" type="button" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-danger" type="button" onclick="clearHistory()">Clear All</button>
+    </div>`;
+  openModal();
+}
+
+function clearHistory() {
+  const data = getCurrentUserData();
+  data.entries = [];
+  saveCurrentUserData(data);
+  closeModal();
+  renderHistory();
+}
+
+function exportData() {
+  const data = getCurrentUserData();
+  const json = JSON.stringify({ username: currentUser, exportedAt: new Date().toISOString(), ...data }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href:     url,
+    download: `spendy-${currentUser}-${new Date().toISOString().split('T')[0]}.json`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal()  { document.getElementById('modal-overlay').classList.add('visible'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('visible'); }
+function onModalOverlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+/* Also allow Enter key inside modals */
+document.getElementById('modal-overlay').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ============================================================
+   APP INITIALIZATION
+   ============================================================ */
+function init() {
+  const saved = sessionStorage.getItem(SESSION_KEY);
+  if (saved && getUsers()[saved]) {
+    currentUser = saved;
+    postLogin();
+    return;
+  }
+  showScreen('auth');
+}
+
+/* Register PWA service worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('sw.js').catch(() => {})
+  );
+}
+
+init();
+</script>
+</body>
+</html>
