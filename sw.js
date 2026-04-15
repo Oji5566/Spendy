@@ -6,8 +6,7 @@ const CACHE_NAME = 'spendy-v1';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json',
-  './sw.js'
+  './manifest.json'
 ];
 
 /* --- Install: pre-cache app shell --- */
