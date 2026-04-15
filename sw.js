@@ -2,7 +2,7 @@
    Spendy Service Worker — Cache-first app shell strategy
    ============================================================ */
 
-const CACHE_NAME = 'spendy-v1';
+const CACHE_NAME = 'spendy-v2';
 const APP_SHELL = [
   './',
   './index.html',
