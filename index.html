@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spendy</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0F6CBD">
@@ -1211,11 +1211,13 @@ function generateId() {
 function calcEarningPerMinute(s) {
   const { incomeType, incomeAmount, hoursPerWeek, realWageEnabled, monthlyFixedExpenses } = s;
   let perMin = 0;
+  // 4.33 = average weeks per month (52 weeks / 12 months)
+  const WEEKS_PER_MONTH = 52 / 12;
   if (incomeType === 'hourly')   perMin = incomeAmount / 60;
-  if (incomeType === 'monthly')  perMin = incomeAmount / (hoursPerWeek * 4.33) / 60;
-  if (incomeType === 'annual')   perMin = incomeAmount / (hoursPerWeek * 52)   / 60;
+  if (incomeType === 'monthly')  perMin = incomeAmount / (hoursPerWeek * WEEKS_PER_MONTH) / 60;
+  if (incomeType === 'annual')   perMin = incomeAmount / (hoursPerWeek * 52)               / 60;
   if (realWageEnabled && monthlyFixedExpenses > 0) {
-    perMin = Math.max(0, perMin - monthlyFixedExpenses / (hoursPerWeek * 4.33) / 60);
+    perMin = Math.max(0, perMin - monthlyFixedExpenses / (hoursPerWeek * WEEKS_PER_MONTH) / 60);
   }
   return perMin;
 }
