@@ -1403,7 +1403,7 @@ function collectOnboardingStep(step) {
   }
   if (step === 3) {
     const hrs = parseFloat(document.getElementById('onboarding-hours').value);
-    if (!hrs || hrs <= 0 || hrs > 168) { alert('Please enter valid hours (1–168).'); return false; }
+    if (!hrs || hrs <= 0 || hrs > 168) { alert('Please enter valid hours (1-168).'); return false; }
     onboardingData.hoursPerWeek = hrs;
   }
   if (step === 4) {
@@ -1514,7 +1514,7 @@ function keyPress(key) {
   // Pulse animation
   const el = document.getElementById('bill-amount');
   el.classList.remove('pulse');
-  void el.offsetWidth; // force reflow
+  void el.offsetWidth; // Force reflow to restart CSS pulse animation
   el.classList.add('pulse');
 }
 
@@ -1611,7 +1611,7 @@ function showSuccess() {
   // Re-trigger SVG animation
   const path = overlay.querySelector('.checkmark-path');
   path.style.animation = 'none';
-  void path.offsetWidth;
+  void path.offsetWidth; // Force reflow to reset SVG animation before replaying
   path.style.animation = '';
   setTimeout(() => overlay.classList.remove('visible'), 1500);
 }

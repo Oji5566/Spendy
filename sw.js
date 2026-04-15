@@ -49,10 +49,9 @@ self.addEventListener('fetch', event => {
           response.type === 'basic'
         ) {
           const clone = response.clone();
-          // Return both the network response and the cache write together
-          return caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, clone))
-            .then(() => response);
+          // Write to cache asynchronously — do not block the response
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
         }
         return response;
       });
